@@ -47,13 +47,14 @@
         <thead>
           <tr>
             <th class="text-xs-left " data-sort="string">Name</th>
+            <th class="text-xs-right " data-sort="int">button</th>
             <th class="text-xs-right " data-sort="int">Size</th>
             <th class="text-xs-right " data-sort="int">Modified</th>
           </tr>
         </thead>
         <tfoot>
           <tr>
-            <td colspan="3">
+            <td colspan="4">
                 <small class="pull-xs-left text-muted" dir="ltr">{{total.dir}} folders and {{total.file}} files, {{total.size | size_fmt}} in total</small>
             </td>
           </tr>
@@ -61,7 +62,8 @@
         <tbody>
           {% for entry in contents if entry.type == 'dir' %}
           <tr>
-              <td class="text-xs-left " data-sort-value="dir-{{entry.name | lower}}"><i class="fa fa-fw fa-folder " aria-hidden="true"></i>&nbsp;<a href="{{entry.name}}/" ><strong>{{entry.name}}</strong></a></td>
+            <td class="text-xs-left " data-sort-value="dir-{{entry.name | lower}}"><i class="fa fa-fw fa-folder " aria-hidden="true"></i>&nbsp;<a href="{{entry.name}}/" ><strong>{{entry.name}}</strong></a></td>
+            <td class="text-xs-left " data-sort-value="-1"><a data-toggle="modal" data-target="#uploader-modal2"><i class="ui icon info circle blue large"></i></a></td>
             <td class="text-xs-right " data-sort-value="-1">&mdash;</td>
             <td class="text-xs-right " data-sort-value="{{entry.mtime}}" title="{{entry.mtime | time_fmt}}">{{entry.mtime | humanize}}</td>
           </tr>
@@ -103,7 +105,7 @@
         </div>
       </div>
     </div>
-    <!-- <div class="modal fade" id="uploader-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade" id="uploader-modal" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-body">
@@ -118,8 +120,8 @@
           </div>
         </div>
       </div>
-    </div> -->
-    <div class="modal fade" id="uploader-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    </div>
+    <div class="modal fade" id="uploader-modal2" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
