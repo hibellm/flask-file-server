@@ -9,17 +9,16 @@
   <link rel="stylesheet" href="{{url_for('static', filename='css/listr.pack.css')}}">
   <link rel="stylesheet" href="{{url_for('static', filename='css/jquery.filer.css')}}">
 
-  <!-- GOING TO TRY USING THE SEMANTIC CODE IN A MODAL -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.4/dist/semantic.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.4/dist/semantic.min.js"></script>
 </head>
 <body dir="ltr">
   <div class="container">
     <div class="row">
       <div class="col-xs-12">
         <ol class="breadcrumb" dir="ltr">
-            <li class="breadcrumb-item"><a href="{{url_for('path_view')}}"><i class="fa fa-fw fa-home fa-lg"></i> </a></li>
+            <li class="breadcrumb-item"><a href="{{url_for('path_view')}}"><i class="ui icon large home"></i></a></li>
             {% for part in path.strip('/').split('/') %}
             <li class="breadcrumb-item"><a href="{{url_for('path_view', p='/'+path[:path.find(part)+part|length]+'/')}}"><strong>{{ part }}</strong></a></li>
             {% endfor %}
@@ -33,11 +32,11 @@
       </div>
       <div class="pull-sm-right">
         <div class="btn-group">
-          <a data-toggle="modal" data-target="#uploader-modal" class="btn btn-secondary text-muted">Upload</a>
+          <a data-toggle="modal" data-target="#uploader-modal" class="ui button icon blue"><i class="ui icon upload"></i>Upload</a>
           {% if hide_dotfile == 'yes' %}
-          <a href="?hide-dotfile=no" class="btn btn-secondary text-muted">Show Dotfiles</a>
+          <a href="?hide-dotfile=no" class="ui button icon green secondary"><i class="ui icon eye"></i>Show Dotfiles</a>
           {% else %}
-          <a href="?hide-dotfile=yes" class="btn btn-secondary text-muted">Hide Dotfiles</a>
+          <a href="?hide-dotfile=yes" class="ui button icon green secondary"><i class="ui icon eye slash"></i>Hide Dotfiles</a>
           {% endif %}
         </div>
       </div>
@@ -46,66 +45,80 @@
       </div>
     </div>
     <div class="table-responsive">
-      <table id="listr-table" class="table table-hover">
+      <table id="listr-table" class="ui table table-hover">
         <thead>
+           <tr>
+             <th colspan="4">
+                <small class="left aligned disabled" dir="ltr">Summary: {{total.dir}} folders and {{total.file}} files, {{total.size | size_fmt}} in total</small>
+            </th>
+           </tr>
           <tr>
-            <th class="text-xs-left " data-sort="string">Name</th>
-            <th class="text-xs-right " data-sort="int">button</th>
-            <th class="text-xs-right " data-sort="int">Size</th>
-            <th class="text-xs-right " data-sort="int">Modified</th>
+            <th class="left aligned" data-sort="string">Name</th>
+            <th class="right aligned" data-sort="int"></th>
+            <th class="right aligned" data-sort="int">Size</th>
+            <th class="right aligned" data-sort="int">Modified</th>
           </tr>
         </thead>
         <tfoot>
           <tr>
             <td colspan="4">
-                <small class="pull-xs-left text-muted" dir="ltr">{{total.dir}} folders and {{total.file}} files, {{total.size | size_fmt}} in total</small>
+                <small class="left aligned disabled" dir="ltr">{{total.dir}} folders and {{total.file}} files, {{total.size | size_fmt}} in total</small>
             </td>
           </tr>
         </tfoot>
         <tbody>
           {% for entry in contents if entry.type == 'dir' %}
           <tr>
-            <td class="text-xs-left " data-sort-value="dir-{{entry.name | lower}}"><i class="fa fa-fw fa-folder " aria-hidden="true"></i>&nbsp;<a href="{{entry.name}}/" ><strong>{{entry.name}}</strong></a></td>
-            <td class="text-xs-left " data-sort-value="-1"><a data-toggle="modal" data-target="#uploader-modal2"><i class="ui icon info circle blue large"></i></a></td>
-            <td class="text-xs-right " data-sort-value="-1">&mdash;</td>
-            <td class="text-xs-right " data-sort-value="{{entry.mtime}}" title="{{entry.mtime | time_fmt}}">{{entry.mtime | humanize}}</td>
+            <td class="ui left aligned" data-sort-value="dir-{{entry.name | lower}}"><i class="ui icon folder " aria-hidden="true"></i>&nbsp;<a href="{{entry.name}}/" ><strong>{{entry.name}}</strong></a></td>
+            <td class="ui left aligned" data-sort-value="-1"><a data-toggle="modal" data-target="#uploader-modal2"><i class="ui icon info circle blue large"></i></a></td>
+            <td class="ui right aligned" data-sort-value="-1">&mdash;</td>
+            <td class="ui right aligned" data-sort-value="{{entry.mtime}}" title="{{entry.mtime | time_fmt}}">{{entry.mtime | humanize}}</td>
           </tr>
           {% endfor %}
           {% for entry in contents if entry.type == 'file' %}
           <tr>
-              <td class="text-xs-left " data-sort-value="file-{{entry.name | lower}}"><i class="fa fa-fw {{entry.name | icon_fmt}} " aria-hidden="true"></i>&nbsp;
-              <a {% if entry.name | data_fmt not in ['unknown', 'archive'] %} data-toggle="modal" data-target="#viewer-modal" data-type="{{entry.name | data_fmt}}" {% endif %} href="{{entry.name}}" data-size="{{entry.size | size_fmt}}">{{entry.name}}</a>
+              <td class="ui aligned left" data-sort-value="file-{{entry.name | lower}}"><i class="ui icon {{entry.name | icon_fmt}} " aria-hidden="true"></i>&nbsp;
+                {{entry.name}}
               </td>
-              <td class="text-xs-right " data-sort-value="{{entry.size}}" title="{{entry.size}} bytes">{{entry.size | size_fmt}}</td>
-              <td class="text-xs-right " data-sort-value="{{entry.mtime}}" title="{{entry.mtime | time_fmt}}">{{entry.mtime | humanize}}</td>
+              <td class="ui left aligned">
+                <a href="{{entry.name}}" data-size="{{entry.size | size_fmt}}">
+                <i class="ui icon inverted green download circular small"></i></a>
+                {% if entry.name | data_fmt in ['text', 'audio', 'image', 'video', 'markdown'] %}
+                <a  data-toggle="modal" data-target="#viewer-modal" data-type="{{entry.name | data_fmt}}"  href="{{entry.name}}" data-size="{{entry.size | size_fmt}}">
+                <i class="ui icon inverted black eye circular small"></i></a>
+                {% endif %}
+              </td>
+              <td class="ui right aligned" data-sort-value="{{entry.size}}" title="{{entry.size}} bytes">{{entry.size | size_fmt}}</td>
+              <td class="ui right aligned" data-sort-value="{{entry.mtime}}" title="{{entry.mtime | time_fmt}}">{{entry.mtime | humanize}}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+<!--VIEWER MODEL-->
     <div class="modal fade" id="viewer-modal" tabindex="-1" role="dialog" aria-labelledby="file-name" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close pull-xs-right" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <h4 class="modal-title text-left" id="file-name">&nbsp;</h4>
+            <div type="button" class="ui button close right aligned" data-dismiss="modal" aria-hidden="true">&times;</div>
+            <h4 class="modal-title left aligned" id="file-name">&nbsp;</h4>
             <small class="text-muted" id="file-meta"></small>
           </div>
           <div class="modal-body"></div>
           <div class="modal-footer">
-            <div class="pull-xs-left">
-              <button type="button" class="btn btn-link highlight hidden-xs-up">Apply syntax highlighting</button>
-            </div>
-            <div class="pull-xs-right">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-
-              <div class="btn-group">
-                <a href="#" class="btn btn-primary fullview" download>Download</a>
-                </div>
-              </div>
+<!--            <div class="left aligned">-->
+<!--              <div type="button" class="ui button blue highlight">Apply syntax highlighting</div>-->
+<!--            </div>-->
+            <div class="right aligned">
+              <div type="button" class="ui button icon secondary" data-dismiss="modal"><i class="ui icon inverted red times small"></i> Close</div>
+              <a href="#" class="ui icon button green fullview" download><i class="ui icon inverted download small"></i> Download</a>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
       </div>
     </div>
     <div class="modal fade" id="uploader-modal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -117,8 +130,8 @@
             </form>
           </div>
           <div class="modal-footer">
-            <div class="pull-xs-right">
-              <button type="button" id="close-uploader" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <div class="ui aligned right">
+              <div type="button" id="close-uploader" class="ui button icon secondary" data-dismiss="modal"><i class="ui icon inverted red times small"></i> Close</div>
             </div>
           </div>
         </div>
@@ -154,9 +167,54 @@
             </table>
           </div>
           <div class="modal-footer">
-            <div class="pull-xs-right">
-              <button type="button" id="close-uploader" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <div class="right aligned">
+              <div type="button" id="close-uploader" class="ui button icon secondary" data-dismiss="modal"><i class="ui icon inverted red times small"></i> Close</div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="modal fade" id="downloader-modal2" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="ui header large">Download file</h1>
+          </div>
+          <div class="modal-body">
+            <div class="ui segment">
+
+
+                <div class="ui middle aligned center aligned grid">
+                    <div class="column">
+                      <h2 class="ui teal image header">
+                          <i class="ui icon sign-in"></i>
+                        <div class="content">
+                             Please enter your Userid to download!
+                        </div>
+                      </h2>
+                      <form class="ui large form">
+                        <div class="ui stacked segment">
+                          <div class="field">
+                            <div class="ui left icon input">
+                              <i class="ui icon user"></i>
+                              <input type="text" name="userid" placeholder="UserId">
+                            </div>
+                          </div>
+                          <div class="ui fluid large teal download button">Download</div>
+                        </div>                  
+                  
+                      </form>
+                      <div class="ui message teal inverted">
+                          <p>Why do I need to provide my Userid?<br>For purposes of logging who has obtained the files we will log your Userid only and the file you downloaded.</p>
+                      </div>
+                    </div>
+                  </div>
+
+            </div>
+          </div>
+          <div class="modal-footer">
           </div>
         </div>
       </div>

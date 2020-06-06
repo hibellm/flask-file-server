@@ -10,15 +10,39 @@ import json
 import mimetypes
 
 app = Flask(__name__, static_url_path='/assets', static_folder='assets')
-root = os.path.expanduser('~')
+root = os.path.join(os.path.expanduser('~'), 'Documents')
 
 ignored = ['.bzr', '$RECYCLE.BIN', '.DAV', '.DS_Store', '.git', '.hg', '.htaccess', '.htpasswd', '.Spotlight-V100', '.svn', '__MACOSX', 'ehthumbs.db', 'robots.txt', 'Thumbs.db', 'thumbs.tps']
-datatypes = {'audio': 'm4a,mp3,oga,ogg,webma,wav', 'archive': '7z,zip,rar,gz,tar', 'image': 'gif,ico,jpe,jpeg,jpg,png,svg,webp', 'pdf': 'pdf', 'quicktime': '3g2,3gp,3gp2,3gpp,mov,qt', 'source': 'atom,bat,bash,c,cmd,coffee,css,hml,js,json,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,swift,scss,sh,xml,yml,plist', 'text': 'txt', 'video': 'mp4,m4v,ogv,webm', 'website': 'htm,html,mhtm,mhtml,xhtm,xhtml'}
-icontypes = {'fa-music': 'm4a,mp3,oga,ogg,webma,wav', 'fa-archive': '7z,zip,rar,gz,tar', 'fa-picture-o': 'gif,ico,jpe,jpeg,jpg,png,svg,webp', 'fa-file-text': 'pdf', 'fa-film': '3g2,3gp,3gp2,3gpp,mov,qt', 'fa-code': 'atom,plist,bat,bash,c,cmd,coffee,css,hml,js,json,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,swift,scss,sh,xml,yml', 'fa-file-text-o': 'txt', 'fa-film': 'mp4,m4v,ogv,webm', 'fa-globe': 'htm,html,mhtm,mhtml,xhtm,xhtml'}
+datatypes = {'audio': 'm4a,mp3,oga,ogg,webma,wav,wma',
+             'archive': '7z,zip,rar,gz,tar',
+             'image': 'gif,ico,jpe,jpeg,jpg,png,svg,webp',
+             'pdf': 'pdf',
+             'quicktime': '3g2,3gp,3gp2,3gpp,mov,qt',
+             'source': 'atom,bat,bash,c,cmd,coffee,css,hml,js,json,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,swift,scss,sh,yml,plist',
+             'text': 'txt,csv,log,md,htm,html,mhtm,mhtml,xhtm,xhtml',
+             'video': 'mp4,m4v,ogv,webm',
+             'xml': 'xml',
+             'markdown': 'x',
+             'msoffice': 'xls,xlsm,xlsx,doc,dot,dotx,docx,ppt,pptx',
+             'html': 'aaa'}
 
-mjhdt=os.path.getmtime('README.md')
+icontypes = {'file audio': 'm4a,mp3,oga,ogg,webma,wav',
+             'file archive': '7z,zip,rar,gz,tar',
+             'file image': 'gif,ico,jpe,jpeg,jpg,png,svg,webp',
+             'file pdf': 'pdf',
+             'file film': '3g2,3gp,3gp2,3gpp,mov,qt,mp4,m4v,ogv,webm',
+             'file code': 'atom,plist,bat,bash,c,cmd,coffee,css,hml,js,json,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,swift,scss,sh,xml,yml',
+             'file text': 'txt,md',
+             'file excel': 'xls,xlsm',
+             'file powerpoint': 'ppt,pptx',
+             'file word': 'doc,docx',
+             'globe': 'htm,html,mhtm,mhtml,xhtm,xhtml'}
 
+print(os.getcwd())
 
+mjhdt = os.path.getmtime('README.md')
+
+# FILTERS FOR TEMPLATES
 @app.template_filter('size_fmt')
 def size_fmt(size):
     return humanize.naturalsize(size)
@@ -39,7 +63,7 @@ def data_fmt(filename):
 
 @app.template_filter('icon_fmt')
 def icon_fmt(filename):
-    i = 'fa-file-o'
+    i = 'file'
     for icon, exts in icontypes.items():
         if filename.split('.')[-1] in exts:
             i = icon
@@ -50,12 +74,16 @@ def time_humanize(timestamp):
     mdate = datetime.utcfromtimestamp(timestamp)
     return humanize.naturaltime(mdate)
 
+
+# FUNCTIONS
 def get_type(mode):
+    '''Is it a directory or file?'''
     if stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
         type = 'dir'
     else:
         type = 'file'
     return type
+
 
 def partial_response(path, start, end=None):
     file_size = os.path.getsize(path)
@@ -86,6 +114,7 @@ def partial_response(path, start, end=None):
     )
     return response
 
+
 def get_range(request):
     range = request.headers.get('Range')
     m = re.match('bytes=(?P<start>\d+)-(?P<end>\d+)?', range)
@@ -99,14 +128,17 @@ def get_range(request):
     else:
         return 0, None
 
+
 class PathView(MethodView):
     def get(self, p=''):
         hide_dotfile = request.args.get('hide-dotfile', request.cookies.get('hide-dotfile', 'no'))
 
+        # PATH IS THE ROOT AND THE SUBFOLDER(P)
         path = os.path.join(root, p)
         if os.path.isdir(path):
             contents = []
             total = {'size': 0, 'dir': 0, 'file': 0}
+            # IF A FILE
             for filename in os.listdir(path):
                 if filename in ignored:
                     continue
@@ -114,6 +146,7 @@ class PathView(MethodView):
                     continue
                 filepath = os.path.join(path, filename)
                 stat_res = os.stat(filepath)
+                # CREATE A DICTIONARY OF THE FILE INFO
                 info = {}
                 info['name'] = filename
                 info['mtime'] = stat_res.st_mtime
@@ -124,7 +157,7 @@ class PathView(MethodView):
                 info['size'] = sz
                 total['size'] += sz
                 contents.append(info)
-            page = render_template('index.html', path=p, contents=contents, total=total, hide_dotfile=hide_dotfile,mjhdt=mjhdt)
+            page = render_template('index.html', path=p, contents=contents, total=total, hide_dotfile=hide_dotfile, mjhdt=mjhdt)
             res = make_response(page, 200)
             res.set_cookie('hide-dotfile', hide_dotfile, max_age=16070400)
         elif os.path.isfile(path):
@@ -138,8 +171,10 @@ class PathView(MethodView):
             res = make_response('Not found', 404)
         return res
 
+    # UPLOADING
     def post(self, p=''):
-        path = os.path.join(root, p)
+        # path = os.path.join(root, p)
+        path = os.path.join('.', p)
         info = {}
         if os.path.isdir(path):
             files = request.files.getlist('files[]')
@@ -147,7 +182,11 @@ class PathView(MethodView):
                 try:
                     filename = secure_filename(file.filename)
                     file.save(os.path.join(path, filename))
+                    print(os.path.join(path, filename), 'was saved')
+                    info['status'] = 'success'
+                    info['msg'] = 'File Saved'
                 except Exception as e:
+                    print(e)
                     info['status'] = 'error'
                     info['msg'] = str(e)
                 else:
@@ -155,13 +194,17 @@ class PathView(MethodView):
                     info['msg'] = 'File Saved'
         else:
             info['status'] = 'error'
-            info['msg'] = 'Invalid Operation'
+            info['msg'] = 'Invalid Operation - this is a directory'
+
+        print(info)
         res = make_response(json.JSONEncoder().encode(info), 200)
         res.headers.add('Content-type', 'application/json')
+        print(res)
         return res
+
 
 path_view = PathView.as_view('path_view')
 app.add_url_rule('/', view_func=path_view)
 app.add_url_rule('/<path:p>', view_func=path_view)
 
-app.run('0.0.0.0', 8000, threaded=True, debug=True)
+app.run(port=8000, threaded=True, debug=True)
